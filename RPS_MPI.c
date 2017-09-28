@@ -233,38 +233,34 @@ void gather_petri() {
 
 cell** create_full_petri(cell* whole_petri)
 {
+    // GRID SIZE TO REDUCE CODE LENGTH.
+    int grid = ((p_local_petri_x_dim/size) * (p_local_petri_y_dim/size));
+    int sq = sqrt(size);
+    int empty_cell_offset = (sq*2);
 
-cell** create_full_petri(cell* whole_petri)
-    {
-        // GRID SIZE TO REDUCE CODE LENGTH.
-        int grid = ((p_local_petri_x_dim/size) * (p_local_petri_y_dim/size));
-        int sq = sqrt(size);
-        int empty_cell_offset = (sq*2);
-
-        // ALLOCATING SPACE FOR A 2D ARRAY OF THE ENTIRE PETRI:
-        petri = malloc(sizeof(*petri)*IMG_Y);
-        for (int y = 0; y < IMG_Y; y++)
-            petri[y] = malloc(sizeof(*petri)*IMG_X);
+    // ALLOCATING SPACE FOR A 2D ARRAY OF THE ENTIRE PETRI:
+    petri = malloc(sizeof(*petri)*IMG_Y);
+    for (int y = 0; y < IMG_Y; y++)
+        petri[y] = malloc(sizeof(*petri)*IMG_X);
 //    printf("size of whole grid = %d\n", (IMG_Y) * (IMG_X ));
 
 
 //    printf("Local x dimension: %d\n", p_local_petri_x_dim);
 //    printf("Local y dimension: %d\n", p_local_petri_y_dim);
 
-        int i = 2;
-        for (int s = size-1; s >= 0 ; s--) {
-            int mod = ((size -1) - s);
+    int i = 2;
+    for (int s = size-1; s >= 0 ; s--) {
+        int mod = ((size -1) - s);
 
-            // Setting up the next iteration over the big array:
-            for (int y = 1; y < p_local_petri_y_dim-1; y++) {
-                for (int x = 1; x < p_local_petri_x_dim-1; x++) {
-                    petri[y][x] = whole_petri[i];
-                    printf("MAPPING: (%d, %d) == %d    CONTENT: [%d, %d]\n", x, y, i, petri[x][y].color, petri[x][y].strength);
-                    i++;
-                }
+        // Setting up the next iteration over the big array:
+        for (int y = 1; y < p_local_petri_y_dim-1; y++) {
+            for (int x = 1; x < p_local_petri_x_dim-1; x++) {
+                petri[y][x] = whole_petri[i];
+                printf("MAPPING: (%d, %d) == %d    CONTENT: [%d, %d]\n", x, y, i, petri[x][y].color, petri[x][y].strength);
+                i++;
             }
-            i++;
         }
+        i++;
     }
 }
 
