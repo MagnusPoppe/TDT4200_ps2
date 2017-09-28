@@ -40,6 +40,7 @@ int main(int argc, char** argv){
 
     images[0][rx][ry].color = rt;
     images[0][rx][ry].strength = 1;
+    printf("NEW CELL (%d, %d) with color %d and strength %d\n", rx, ry, rt, 1);
   }
 
 
