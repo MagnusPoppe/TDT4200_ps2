@@ -4,33 +4,27 @@
 #include <time.h>
 
 #include "RPS_MPI.h"
-
-void initialize();
-
-void initialize_petri();
-
-void iterate_CA();
-
-void gather_petri();
-
-void create_types();
-
-cell *get_first_row(cell **petri);
-cell *get_first_col(cell **petri, int xSize, int ySize);
-cell *get_last_row(cell **petri, int ySize);
-cell *get_last_col(cell **petri, int xSize, int ySize);
-cell** create_full_petri(cell* whole_petri);
-cell *get_first_row(cell **petri);
-cell *get_first_col(cell **petri, int xSize, int ySize);
-cell *get_last_row(cell **petri, int ySize);
-cell *get_last_col(cell **petri, int xSize, int ySize);
-void print_cell_list(cell *list, int len);
-void stitch_left_column(cell *column, int len);
-void stitch_right_column(cell *column, int len);
-void stitch_top_row(cell *row, int len);
-void stitch_bottom_row(cell *row, int len);
-
-void exchange_borders(cell **matrix, int xSize, int ySize, int rank, int size);
+//
+//void initialize();
+////void initialize_petri();
+////void iterate_CA();
+//void gather_petri();
+////void create_types();
+//int *get_first_row(int **petri);
+//int *get_first_col(int **petri, int xSize, int ySize);
+//int *get_last_row(int **petri, int ySize);
+//int *get_last_col(int **petri, int xSize, int ySize);
+//int** create_full_petri(int* whole_petri);
+//int *get_first_row(int **petri);
+//int *get_first_col(int **petri, int xSize, int ySize);
+//int *get_last_row(int **petri, int ySize);
+//int *get_last_col(int **petri, int xSize, int ySize);
+//void print_int_list(int *list, int len);
+//void stitch_left_column(int *column, int len);
+//void stitch_right_column(int *column, int len);
+//void stitch_top_row(int *row, int len);
+//void stitch_bottom_row(int *row, int len);
+//void exchange_borders(int **matrix, int xSize, int ySize, int rank, int size);
 
 int rank;
 int size;
@@ -66,9 +60,27 @@ MPI_Datatype mpi_cell_t;    // Already implemented
 // gets two petri-dishes which they update in a lockstep fashion.
 // dish A is updated by writing to dish B, then next step dish B updates dish A.
 // (or you can just swap them inbetween iterations)
-cell **local_petri_A;
-cell **local_petri_B;
-cell **petri;
+int **local_petri_A;
+int **local_petri_B;
+int **petri;
+
+void initialize();
+//void initialize_petri();
+//void iterate_CA();
+void gather_petri();
+void create_types();
+int *get_first_row(int **petri);
+void get_first_col(int **petri, int* output, int xSize, int ySize);
+int *get_last_row(int **petri, int ySize);
+void get_last_col(int **petri, int* output, int xSize, int ySize);
+int** create_full_petri(int* whole_petri);
+void print_int_list(int *list, int len);
+void stitch_left_column(int *column, int len);
+void stitch_right_column(int *column, int len);
+void stitch_top_row(int *row, int len);
+void stitch_bottom_row(int *row, int len);
+void exchange_borders(int **matrix, int xSize, int ySize, int rank, int size);
+
 
 int main(int argc, char **argv) {
 
@@ -112,8 +124,7 @@ int main(int argc, char **argv) {
     initialize();
     create_types();
     exchange_borders(local_petri_A, p_local_petri_x_dim, p_local_petri_y_dim, rank, size);
-    iterate_CA();
-
+//    iterate_CA();
     gather_petri();
 
     // make_bmp(petri, 0);
@@ -138,11 +149,9 @@ int main(int argc, char **argv) {
     exit(0);
 }
 
-
+//
 void create_types() {
 
-    ////////////////////////////////
-    ////////////////////////////////
     // cell type
     const int nitems = 2;
     int blocklengths[2] = {1, 1};
@@ -157,21 +166,22 @@ void create_types() {
     ////////////////////////////////
     ////////////////////////////////
 
-
-
-    ////////////////////////////////
-    ////////////////////////////////
     // A message for a local petri-dish
     MPI_Type_contiguous(p_local_petri_x_dim * p_local_petri_y_dim,
-                        mpi_cell_t,
+                        MPI_INT,
                         &local_petri_t);
     MPI_Type_commit(&local_petri_t);
-    ////////////////////////////////
-    ////////////////////////////////
 
+    // MESSAGES FOR BORDER EXCHANGE
+    MPI_Type_contiguous(p_local_petri_x_dim,
+                        MPI_INT,
+                        &border_row_t);
+    MPI_Type_commit(&border_row_t);
 
-    //TODO: Create MPI types for border exchange
-
+    MPI_Type_contiguous(p_local_petri_y_dim,
+                        MPI_INT,
+                        &border_col_t);
+    MPI_Type_commit(&border_col_t);
 }
 
 
@@ -183,36 +193,44 @@ void initialize() {
 
     // TODO: When allocating these buffers, keep in mind that you might need to allocate a little more
     // than just your piece of the petri.
-    local_petri_A = malloc(p_local_petri_y_dim * sizeof(cell *));
-    local_petri_B = malloc(p_local_petri_y_dim * sizeof(cell *));
+    local_petri_A = malloc(p_local_petri_y_dim * sizeof(int *));
+    local_petri_B = malloc(p_local_petri_y_dim * sizeof(int *));
 
-    for (int i = 0; i < p_local_petri_x_dim; i++) {
-        local_petri_A[i] = malloc(p_local_petri_x_dim * sizeof(cell));
-        local_petri_B[i] = malloc(p_local_petri_x_dim * sizeof(cell));
+    int c = 0;
+    if (rank == 0) printf("SQUARE + BORDERS OF THE GRID. BORDER SIZE == 1\n");
+    for (int i = 0; i < p_local_petri_y_dim; i++) {
+        local_petri_A[i] = malloc(p_local_petri_x_dim * sizeof(int));
+        local_petri_B[i] = malloc(p_local_petri_x_dim * sizeof(int));
+        for (int x = 0; x < p_local_petri_x_dim; x++) {
+        local_petri_A[i][x] = c;
+        local_petri_B[i][x] = c++;
+        }
+        if (rank == 0) print_int_list(local_petri_A[i], p_local_petri_x_dim);
+
     }
 
-    int xstart = 0;
-    int ystart = 0;
-
-    // TODO: Randomly the local dish. Only perturb cells that belong to your process,
-    // Seed some CAs
-    for (int ii = 0; ii < 100 / size; ii++) {
-        int rx = rand() % (p_local_petri_x_dim - 2);
-        int ry = rand() % (p_local_petri_y_dim - 2);
-        int rt = rand() % 4;
-
-        local_petri_A[rx][ry].color = rt;
-        local_petri_A[rx][ry].strength = 1;
-    }
+//    int xstart = 0;
+//    int ystart = 0;
+//
+//    // TODO: Randomly the local dish. Only perturb ints that belong to your process,
+//    // Seed some CAs
+//    for (int ii = 0; ii < 100 / size; ii++) {
+//        int rx = rand() % (p_local_petri_x_dim - 2);
+//        int ry = rand() % (p_local_petri_y_dim - 2);
+//        int rt = rand() % 4;
+//
+//        local_petri_A[rx][ry].color = rt;
+//        local_petri_A[rx][ry].strength = 1;
+//    }
 }
 
-void iterate_CA() {
-    iterate_image2(local_petri_A, local_petri_B, p_local_petri_x_dim, p_local_petri_y_dim);
-}
+//void iterate_CA() {
+//    iterate_image2(local_petri_A, local_petri_B, p_local_petri_x_dim, p_local_petri_y_dim);
+//}
 
 void gather_petri() {
     int grid = (p_local_petri_x_dim * p_local_petri_y_dim);
-    cell *petri_package = malloc(sizeof(cell) * grid);
+    int *petri_package = malloc(sizeof(int) * grid);
     int i = 0;
     for (int y = 0; y < p_local_petri_y_dim; y++) {
         for (int x = 0; x < p_local_petri_x_dim; x++) {
@@ -222,21 +240,21 @@ void gather_petri() {
 
     int sq = sqrt(size);
     if (rank == 0) {
-        cell* whole_petri = malloc(sizeof(cell) * ((IMG_Y + (sq*2))*( IMG_X + (sq*2))));
-        MPI_Gather(&petri_package, grid, mpi_cell_t, whole_petri, grid, mpi_cell_t, 0, cart_comm);
+        int* whole_petri = malloc(sizeof(int) * ((IMG_Y + (sq*2))*( IMG_X + (sq*2))));
+        MPI_Gather(&petri_package, grid, MPI_INT, whole_petri, grid, MPI_INT, 0, cart_comm);
         create_full_petri(whole_petri);
     } else {
-        MPI_Gather(&petri_package, grid, mpi_cell_t, NULL, grid, mpi_cell_t, 0, cart_comm);
+        MPI_Gather(&petri_package, grid, MPI_INT, NULL, grid, MPI_INT, 0, cart_comm);
     }
 
 }
 
-cell** create_full_petri(cell* whole_petri)
+int** create_full_petri(int* whole_petri)
 {
     // GRID SIZE TO REDUCE CODE LENGTH.
     int grid = ((p_local_petri_x_dim/size) * (p_local_petri_y_dim/size));
     int sq = sqrt(size);
-    int empty_cell_offset = (sq*2);
+    int empty_int_offset = (sq*2);
 
     // ALLOCATING SPACE FOR A 2D ARRAY OF THE ENTIRE PETRI:
     petri = malloc(sizeof(*petri)*IMG_Y);
@@ -256,7 +274,7 @@ cell** create_full_petri(cell* whole_petri)
         for (int y = 1; y < p_local_petri_y_dim-1; y++) {
             for (int x = 1; x < p_local_petri_x_dim-1; x++) {
                 petri[y][x] = whole_petri[i];
-                printf("MAPPING: (%d, %d) == %d    CONTENT: [%d, %d]\n", x, y, i, petri[x][y].color, petri[x][y].strength);
+//                printf("MAPPING: (%d, %d) == %d    CONTENT: [%d, %d]\n", x, y, i, petri[x][y].color, petri[x][y].strength);
                 i++;
             }
         }
@@ -264,147 +282,154 @@ cell** create_full_petri(cell* whole_petri)
     }
 }
 
-cell *get_first_row(cell **petri) {
-    return petri[1];
+void send(int* payload, int direction, MPI_Datatype type, int len)
+{
+    // PRINTING FOR DEBUG:
+    if (direction == p_west) printf("BEFORE SENDING TO WEST:     ");
+    else                     printf("BEFORE SENDING TO EAST:     ");
+    print_int_list(payload, len);
+
+    // SENDING AND FREEING MEMORY
+    MPI_Send(payload, 1, type, direction, 0, cart_comm);
+    if (type == border_col_t) free( payload );
 }
 
-cell *get_last_row(cell **petri, int ySize) {
-    return petri[ySize - 2];
+void recieve(int direction, MPI_Datatype type, int* package, int len)
+{
+    // RECIEVING:
+    MPI_Recv(package, 1, type, direction, 0, cart_comm, MPI_STATUS_IGNORE);
+
+    // PRINT FOR DEBUG:
+    if (direction == p_north) printf("AFTER RECIEVING FROM NORTH: ");
+    else                      printf("AFTER RECIEVING FROM SOUTH: ");
+    print_int_list(package, len);
 }
 
-cell *get_first_col(cell **petri, int xSize, int ySize) {
-    cell *output = malloc(ySize * sizeof(cell));
-    for (int y = 0; y < ySize; y++) {
-        output[y] = petri[y][1];
-    }
-    return output;
+void send_row(int row, int direction, int** matrix, int len)
+{
+    int* payload = matrix[row];
+    send(payload, direction, border_row_t, len);
 }
 
-cell *get_last_col(cell **petri, int xSize, int ySize) {
-    cell *output = malloc(ySize * sizeof(cell));
-    for (int y = 0; y < ySize; y++) {
-        output[y] = petri[y][xSize - 2];
-    }
-    return output;
+void send_col(int col, int direction, int** matrix, int len)
+{
+    // GETTING THE CORRECT VALUES FOR THE COLUMN
+    int* payload = malloc(sizeof(int)*len);
+    for (int y = 0; y < len; y++) payload[y] = matrix[y][col];
+    send(payload, direction, border_col_t, len);
 }
 
-void exchange_borders(cell **matrix, int xSize, int ySize, int rank, int size) {
+void exchange_borders(int **matrix, int xSize, int ySize, int rank, int size) {
     int squared = sqrt(size);
 
-    if (0 <= rank + 1 && rank + 1 <= squared) {
-//        printf("Rank %d is first row, exchange downwards.\n", rank);
-
+    if (0 <= rank + 1 && rank + 1 <= squared)
+    {
         // SEND PACKAGE SOUTH ONLY:
-        cell *south_package = get_first_row(matrix);
-        MPI_Send(&south_package, xSize, mpi_cell_t, p_south, 0, cart_comm);
+        send_row(1, p_south, matrix, xSize);
 
         // RECIEVE PACKAGE FROM SOUTH ONLY:
-        cell *recieve_south = malloc(xSize * sizeof(cell));
-        MPI_Recv(recieve_south, xSize, mpi_cell_t, p_south, 0, cart_comm, MPI_STATUS_IGNORE);
+        int *recieve_south = malloc(xSize * sizeof(int));
+        recieve(p_south, border_row_t, recieve_south, xSize);
         stitch_bottom_row(recieve_south, xSize);
-
-    } else if ((squared * (squared - 1)) + 1 <= rank + 1 && rank + 1 <= size) {
-//        printf("Rank %d is last row. exchange upwards.\n", rank);
+    }
+    else if ((squared * (squared - 1)) + 1 <= rank + 1 && rank + 1 <= size)
+    {
         // SEND PACKAGE NORTH ONLY:
-        cell *north_package = get_last_row(matrix, ySize);
-        MPI_Send(&north_package, xSize, mpi_cell_t, p_north, 0, cart_comm);
+        send_row(xSize-2, p_north, matrix, xSize);
 
         // RECIEVE PACKAGE FROM NORTH ONLY:
-        cell *recieve_north = malloc(xSize * sizeof(cell));
-        MPI_Recv(recieve_north, xSize, mpi_cell_t, p_north, 0, cart_comm, MPI_STATUS_IGNORE);
+        int *recieve_north = malloc(xSize * sizeof(int));
+        recieve(p_north, border_row_t, recieve_north, xSize);
         stitch_top_row(recieve_north, xSize);
-
-    } else {
+    }
+    else
+    {
         // SEND PACKAGE BOTH NORTH AND SOUTH ONLY:
-        cell *south_package = get_first_row(matrix);
-        MPI_Send(&south_package, xSize, mpi_cell_t, p_south, 0, cart_comm);
-
-        cell *north_package = get_last_row(matrix, ySize);
-        MPI_Send(&north_package, xSize, mpi_cell_t, p_north, 0, cart_comm);
+        send_row(1,       p_south, matrix, xSize);
+        send_row(xSize-2, p_north, matrix, xSize);
 
         // RECIEVE PACKAGE BOTH NORTH AND SOUTH ONLY:
-        cell *recieve_south = malloc(xSize * sizeof(cell));
-        MPI_Recv(recieve_south, xSize, mpi_cell_t, p_south, 0, cart_comm, MPI_STATUS_IGNORE);
+        int *recieve_south = malloc(xSize * sizeof(int));
+        recieve(p_south, border_row_t, recieve_south, xSize);
         stitch_bottom_row(recieve_south, xSize);
 
-        cell *recieve_north = malloc(xSize * sizeof(cell));
-        MPI_Recv(recieve_north, xSize, mpi_cell_t, p_north, 0, cart_comm, MPI_STATUS_IGNORE);
+        int *recieve_north = malloc(xSize * sizeof(int));
+        recieve(p_north, border_row_t, recieve_north, xSize);
         stitch_top_row(recieve_north, xSize);
     }
 
-    bool notFound = true;
-    for (int i = 0; i < squared; i++) {
-        if (rank == squared * i) {
-//            printf("Rank %d is first column, exchange left.\n", rank);
-            notFound = false;
-            cell *west_package = get_first_col(matrix, ySize, ySize);
-            MPI_Send(&west_package, ySize, mpi_cell_t, p_west, 0, cart_comm);
+    bool not_edge = true;
+    for (int i = 0; i < squared; i++)
+    {
+        if (rank == squared * i)                    // LEFT END
+        {
+            // SENDING:
+            send_col(1, p_east, matrix, ySize);
 
-            // RECIEVE PACKAGE BOTH NORTH AND SOUTH ONLY:
-            cell *recieve_east = malloc(ySize * sizeof(cell));
-            MPI_Recv(recieve_east, ySize, mpi_cell_t, p_west, 0, cart_comm, MPI_STATUS_IGNORE);
-            stitch_right_column(recieve_east, ySize);
+            // RECIEVING:
+            int* package = malloc(sizeof(int)*ySize);
+            recieve(p_east, border_col_t, package, ySize);
+
+            // BREAKING THE LOOP:
+            not_edge = false;
             break;
-        } else if (rank == (squared * (i + 1)) - 1) {
-//            printf("Rank %d is last column. exchange right.\n", rank);
-            notFound = false;
-            cell *east_package = get_last_col(matrix, xSize, ySize);
-            MPI_Send(&east_package, ySize, mpi_cell_t, p_east, 0, cart_comm);
+        }
+        else if (rank == (squared * (i + 1)) - 1)   // RIGHT END
+        {
+            // SENDING:
+            send_col(ySize-2, p_west, matrix, ySize);
 
-            // RECIEVE PACKAGE BOTH NORTH AND SOUTH ONLY:
-            cell *recieve_west = malloc(ySize * sizeof(cell));
-            MPI_Recv(recieve_west, ySize, mpi_cell_t, p_east, 0, cart_comm, MPI_STATUS_IGNORE);
-            stitch_left_column(recieve_west, ySize);
+            // RECIEVING:
+            int* package = malloc(sizeof(int)*ySize);
+            recieve(p_west, border_col_t, package, ySize);
+
+            // BREAKING THE LOOP:
+            not_edge = false;
             break;
         }
     }
-    if (notFound) {
-//        printf("Rank %d is middle column, exchange right and left.\n", rank);
+    if (not_edge && squared > 2) // NOT EDGE OF GRID:
+    {
+        // SENDING:
+        send_col(ySize-2, p_west, matrix, ySize);
+        send_col(1, p_east, matrix, ySize);
 
-        // RECIEVE PACKAGE BOTH NORTH AND SOUTH ONLY:
-        cell *west_package = get_first_col(matrix, ySize, ySize);
-        MPI_Send(&west_package, ySize, mpi_cell_t, p_west, 0, cart_comm);
-        cell *east_package = get_last_col(matrix, xSize, ySize);
-        MPI_Send(&east_package, ySize, mpi_cell_t, p_east, 0, cart_comm);
-
-        // RECIEVE PACKAGE BOTH NORTH AND SOUTH ONLY:
-        cell *recieve_east = malloc(ySize * sizeof(cell));
-        MPI_Recv(recieve_east, ySize, mpi_cell_t, p_west, 0, cart_comm, MPI_STATUS_IGNORE);
-        cell *recieve_west = malloc(ySize * sizeof(cell));
-        MPI_Recv(recieve_west, ySize, mpi_cell_t, p_east, 0, cart_comm, MPI_STATUS_IGNORE);
-
-        stitch_right_column(recieve_east, ySize);
-        stitch_left_column(recieve_west, ySize);
+        // RECIEVING:
+        int* west_package = malloc(sizeof(int)*ySize);
+        int* east_package = malloc(sizeof(int)*ySize);
+        recieve(p_west, border_col_t, west_package, ySize);
+        recieve(p_east, border_col_t, east_package, ySize);
     }
 }
 
-void stitch_bottom_row(cell *row, int len) {
+void stitch_bottom_row(int *row, int len) {
     for (int i = 0; i < len; i++) {
         local_petri_A[p_local_petri_y_dim - 1][i] = row[i];
     }
 }
 
-void stitch_top_row(cell *row, int len) {
+void stitch_top_row(int *row, int len) {
     for (int i = 0; i < len; i++) {
         local_petri_A[0][i] = row[i];
     }
 }
 
-void stitch_left_column(cell *column, int len) {
+void stitch_left_column(int *column, int len) {
     for (int i = 0; i < len; i++) {
         local_petri_A[i][0] = column[i];
     }
 }
 
-void stitch_right_column(cell *column, int len) {
+void stitch_right_column(int *column, int len) {
     for (int i = 0; i < len; i++) {
         local_petri_A[i][p_local_petri_x_dim - 1] = column[i];
     }
 }
 
-void print_cell_list(cell *list, int len) {
+void print_int_list(int *list, int len) {
     for (int i = 0; i < len; i++) {
-        printf("{%d, %d} ", list[i].color, list[i].strength);
+        if (list[i] < 10) printf("0%d ", list[i]);
+        else              printf("%d ",  list[i]);
     }
     printf("\n");
 }
