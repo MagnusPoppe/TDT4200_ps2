@@ -71,7 +71,7 @@ void exchange_borders(
         // RECIEVE PACKAGE FROM SOUTH ONLY:
         int *recieve_south = malloc(xSize * sizeof(int));
         recieve(p_south, border_row_t, recieve_south, xSize);
-//        stitch_bottom_row(recieve_south, ySize, xSize, matrix);
+        stitch_bottom_row(recieve_south, ySize, xSize, matrix);
     }
     else if ((squared * (squared - 1)) + 1 <= rank + 1 && rank + 1 <= size)
     {
@@ -81,7 +81,7 @@ void exchange_borders(
         // RECIEVE PACKAGE FROM NORTH ONLY:
         int *recieve_north = malloc(xSize * sizeof(int));
         recieve(p_north, border_row_t, recieve_north, xSize);
-//        stitch_top_row(recieve_north, xSize, matrix);
+        stitch_top_row(recieve_north, xSize, matrix);
     }
     else
     {
@@ -138,14 +138,17 @@ void exchange_borders(
     if (not_edge && squared > 2) // NOT EDGE OF GRID:
     {
         // SENDING:
-        send_col(ySize-2, p_west, matrix, ySize);
-        send_col(1, p_east, matrix, ySize);
+        send_col(1, p_west, matrix, ySize);
+        send_col(ySize-2, p_east, matrix, ySize);
 
         // RECIEVING:
         int* west_package = malloc(sizeof(int)*ySize);
         int* east_package = malloc(sizeof(int)*ySize);
         recieve(p_west, border_col_t, west_package, ySize);
         recieve(p_east, border_col_t, east_package, ySize);
+
+        stitch_left_column(west_package, ySize, xSize, matrix);
+        stitch_right_column(east_package, ySize, xSize, matrix);
     }
 }
 
