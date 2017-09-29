@@ -8,12 +8,15 @@ int p_north, p_south, p_east, p_west;
 MPI_Datatype border_row_t;
 MPI_Datatype border_col_t;
 MPI_Comm cart_comm;
+
+
+
 void send(int* payload, int direction, MPI_Datatype type, int len)
 {
     // PRINTING FOR DEBUG:
-    if (direction == p_west) printf("BEFORE SENDING TO WEST:     ");
-    else                     printf("BEFORE SENDING TO EAST:     ");
-    print_list(payload, len);
+//    if (direction == p_west) printf("BEFORE SENDING TO WEST:     ");
+//    else                     printf("BEFORE SENDING TO EAST:     ");
+//    print_list(payload, len);
 
     // SENDING AND FREEING MEMORY
     MPI_Send(payload, 1, type, direction, 0, cart_comm);
@@ -25,10 +28,10 @@ void recieve(int direction, MPI_Datatype type, int* package, int len)
     // RECIEVING:
     MPI_Recv(package, 1, type, direction, 0, cart_comm, MPI_STATUS_IGNORE);
 
-    // PRINT FOR DEBUG:
-    if (direction == p_north) printf("AFTER RECIEVING FROM NORTH: ");
-    else                      printf("AFTER RECIEVING FROM SOUTH: ");
-    print_list(package, len);
+//    // PRINT FOR DEBUG:
+//    if (direction == p_north) printf("AFTER RECIEVING FROM NORTH: ");
+//    else                      printf("AFTER RECIEVING FROM SOUTH: ");
+//    print_list(package, len);
 }
 
 void send_row(int row, int direction, int** matrix, int len)
@@ -68,7 +71,7 @@ void exchange_borders(
         // RECIEVE PACKAGE FROM SOUTH ONLY:
         int *recieve_south = malloc(xSize * sizeof(int));
         recieve(p_south, border_row_t, recieve_south, xSize);
-        stitch_bottom_row(recieve_south, ySize, xSize, matrix);
+//        stitch_bottom_row(recieve_south, ySize, xSize, matrix);
     }
     else if ((squared * (squared - 1)) + 1 <= rank + 1 && rank + 1 <= size)
     {
@@ -78,7 +81,7 @@ void exchange_borders(
         // RECIEVE PACKAGE FROM NORTH ONLY:
         int *recieve_north = malloc(xSize * sizeof(int));
         recieve(p_north, border_row_t, recieve_north, xSize);
-        stitch_top_row(recieve_north, xSize, matrix);
+//        stitch_top_row(recieve_north, xSize, matrix);
     }
     else
     {
@@ -102,11 +105,14 @@ void exchange_borders(
         if (rank == squared * i)                    // LEFT END
         {
             // SENDING:
-            send_col(1, p_east, matrix, ySize);
+            send_col(ySize-2, p_east, matrix, ySize);
 
             // RECIEVING:
             int* package = malloc(sizeof(int)*ySize);
             recieve(p_east, border_col_t, package, ySize);
+
+            // STITCHING PACKAGE TO IMAGE:
+            stitch_right_column(package, ySize, xSize, matrix);
 
             // BREAKING THE LOOP:
             not_edge = false;
@@ -115,11 +121,14 @@ void exchange_borders(
         else if (rank == (squared * (i + 1)) - 1)   // RIGHT END
         {
             // SENDING:
-            send_col(ySize-2, p_west, matrix, ySize);
+            send_col(1, p_west, matrix, ySize);
 
             // RECIEVING:
             int* package = malloc(sizeof(int)*ySize);
             recieve(p_west, border_col_t, package, ySize);
+
+            // STITCHING PACKAGE TO IMAGE:
+            stitch_left_column(package, ySize, xSize, matrix);
 
             // BREAKING THE LOOP:
             not_edge = false;
@@ -152,16 +161,29 @@ void stitch_top_row(int *row, int len, int** matrix) {
     }
 }
 
-void stitch_left_column(int *column, int len, int** matrix) {
-    for (int i = 0; i < len; i++) {
+void stitch_left_column(int *column, int ylen, int xlen, int** matrix) {
+    for (int i = 0; i < ylen; i++) {
         matrix[i][0] = column[i];
     }
 }
 
 void stitch_right_column(int *column, int ylen, int xlen, int** matrix) {
     for (int i = 0; i < ylen; i++) {
-        matrix[i][xlen - 1] = column[i];
+        matrix[i][xlen-1] = column[i];
     }
+}
+
+
+
+void print_matrix(int **matrix, int Xlen, int Ylen) {
+    for (int y = 0; y < Ylen; y++) {
+        for (int x = 0; x < Xlen; x++) {
+            if (matrix[y][x] < 10) printf("0%d ", matrix[y][x]);
+            else printf("%d ", matrix[y][x]);
+        }
+        printf("\n");
+    }
+    printf("\n");
 }
 
 void print_list(int *list, int len) {

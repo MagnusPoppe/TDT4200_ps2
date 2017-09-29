@@ -25,8 +25,9 @@ void send_col(int col, int direction, int** matrix, int len);
 // FUNCTIONS FOR STITCHING THE IMAGE TOGETHER:
 void stitch_bottom_row(int *row, int ylen, int xlen, int** matrix);
 void stitch_top_row(int *row, int len, int** matrix);
-void stitch_left_column(int *column, int len, int** matrix);
+void stitch_left_column(int *column, int ylen, int xlen, int** matrix);
 void stitch_right_column(int *column, int ylen, int xlen, int** matrix);
 
 // UTILS:
 void print_list(int *list, int len);
+void print_matrix(int **matrix, int Xlen, int Ylen);
