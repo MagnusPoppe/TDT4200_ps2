@@ -9,6 +9,7 @@
 #include "CA.h"
 #include "bitmap.h"
 #include "RPS.h"
+#include "border_exchange.h"
 
 #define WHITE   0
 #define ROCK    1
@@ -25,3 +26,15 @@
 #define ITERATIONS 10000
 
 #endif
+
+void initialize();
+//void initialize_petri();
+//void iterate_CA();
+void gather_petri();
+void create_types();
+int *get_first_row(int **petri);
+void get_first_col(int **petri, int* output, int xSize, int ySize);
+int *get_last_row(int **petri, int ySize);
+void get_last_col(int **petri, int* output, int xSize, int ySize);
+int** create_full_petri(int* whole_petri);
+void print_int_list(int *list, int len);

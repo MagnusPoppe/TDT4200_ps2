@@ -4,7 +4,7 @@
 # CFLAGS+= -DDEBUG
 util_objects = CA.o bitmap.o
 serial_objects = RPS.o
-parallel_objects = RPS_MPI.o
+parallel_objects = RPS_MPI.o border_exchange.o
 
 SHELL := /bin/bash
 
