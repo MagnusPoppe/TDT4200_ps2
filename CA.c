@@ -78,8 +78,8 @@ void iterate_image(cell **old_image, cell **next_image) {
 
 void iterate_image2(cell **old_image, cell **next_image, int image_X, int image_Y) {
 
-    for (int xx = 1; xx < image_X - 2; xx++) {
-        for (int yy = 1; yy < image_Y - 2; yy++) {
+    for (int xx = 1; xx < image_X - 1; xx++) {
+        for (int yy = 1; yy < image_Y - 1; yy++) {
             // printf("%d %d\n", xx, yy);
             next_image[xx][yy] = next_cell(xx, yy, old_image);
         }

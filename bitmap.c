@@ -11,8 +11,10 @@ void savebmp(char *name,uchar *buffer,int x,int y) {
 	uchar header[54]={'B','M',size&255,(size>>8)&255,(size>>16)&255,size>>24,0,
                     0,0,0,54,0,0,0,40,0,0,0,x&255,x>>8,0,0,y&255,y>>8,0,0,1,0,24,0,0,0,0,0,0,
                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-	fwrite(header,1,54,f);
-	fwrite(buffer,1,IMG_X*IMG_Y*3,f);
+	int ierr = fwrite(header,1,54,f);
+    if (ierr != 54) printf("ERROR WRITING HEADER.");
+	ierr = fwrite(buffer,1,IMG_X*IMG_Y*3,f);
+    if (ierr != IMG_X*IMG_Y*3) printf("ERROR WRITING IMAGE.");
 	fclose(f);
 }
 

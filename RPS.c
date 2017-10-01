@@ -28,7 +28,7 @@ int main(int argc, char** argv){
   // This makes sense when you remember we have many images, a la images[ImageNo][x][y]
   cell*** images = calloc(1024, sizeof(cell**));
   for(int ii = 0; ii < 1024; ii++){
-    images[ii] = alloc_img(img_buffer, ii);
+    images[ii] = malloc(img_buffer, ii);
   }
 
 

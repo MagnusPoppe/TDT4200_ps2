@@ -16,25 +16,21 @@
 #define PAPER   2
 #define SCISSOR 3
 
-#define IMG_X 4
-#define IMG_Y 4
+#define IMG_X 512
+#define IMG_Y 512
 
 // Each cell is updated based on neighbors of distance 1
 #define BORDER_SIZE 1
 
 // How many iterations?
-#define ITERATIONS 10000
+#define ITERATIONS 250
 
 #endif
-
+void create_cartesian_communicator();
 void initialize();
-//void initialize_petri();
-//void iterate_CA();
+void iterate_CA(cell** current_image, cell** next_image);
 void gather_petri();
 void create_types();
-int *get_first_row(int **petri);
-void get_first_col(int **petri, int* output, int xSize, int ySize);
-int *get_last_row(int **petri, int ySize);
-void get_last_col(int **petri, int* output, int xSize, int ySize);
-int** create_full_petri(int* whole_petri);
-void print_int_list(int *list, int len);
+void convert_1D_to_2D(cell* whole_petri, int len);
+void write_images();
+void free_multi_cell_array(cell **array, int width);

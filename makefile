@@ -1,4 +1,4 @@
-# CFLAGS+= -std=c99 -g -O3
+CFLAGS+= -std=c99 -g -O3
 
 # by uncommenting this line the preprocessor will see #ifdef DEBUG as true
 # CFLAGS+= -DDEBUG
@@ -17,7 +17,7 @@ parallel: $(util_objects) $(parallel_objects)
 	mpicc $(util_objects) $(parallel_objects) -o parallelRPS
 
 serial : $(util_objects) $(serial_objects)
-	gcc $(util_objects) $(serial_objects) -o serialRPS
+	gcc  $(CFLAGS) $(util_objects) $(serial_objects) -o serialRPS
 
 
 RPS_MPI.o: RPS_MPI.c RPS_MPI.h
@@ -41,6 +41,10 @@ clear :
 .PHONY : run
 run : clean parallel clear
 	mpirun -n 4 ./parallelRPS
+
+.PHONY : parallelVideo
+parallelVideo : clean parallel clear
+	mpirun -n 4 ./parallelRPS && ffmpeg -framerate 60 -i data/CA-%000d.bmp -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p output.mp4
 
 # Finally, the test target. Builds the 'all' target, then runs the test script on the output
 .PHONY : video
