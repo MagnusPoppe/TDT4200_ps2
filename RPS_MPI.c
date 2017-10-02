@@ -57,13 +57,23 @@ int main(int argc, char **argv) {
     initialize();
     create_types();
 
+
     if (rank == 0)
     {
         // THIS IS DEALLOCATED INSIDE THE "WRITE IMAGES" LOOP.
+        printf("CALCULATING IMAGES...\n");
         images = calloc(ITERATIONS, sizeof(cell**));
     }
 
+    int percentage = ITERATIONS/100;
+    int percent = 0;
     for( int i = 0; i < ITERATIONS; i++) {
+        if (rank == 1 && i == (percent+1) * percentage) {
+            percent ++;
+            system("clear");
+            printf("Progress iterating over the petri dish: %d %c \n", percent, '%');
+        }
+
         exchange_borders(
             local_petri_A, local_x, local_y, rank, size,
             p_north, p_south, p_east, p_west, border_row_t, border_col_t, cart_comm
@@ -71,7 +81,7 @@ int main(int argc, char **argv) {
 
         iterate_CA(local_petri_A, local_petri_B);
         gather_petri();
-        if (rank == 0)
+        if (rank==0)
         {
             images[i] = petri;
         }
@@ -81,22 +91,22 @@ int main(int argc, char **argv) {
         local_petri_A = local_petri_B;
 
         local_petri_B = calloc(local_y, sizeof(cell *));
-        for (int i = 0; i < local_y; i++)
-            local_petri_B[i] = calloc(local_x, sizeof(cell));
+        for (int i = 0; i < local_y; i++) local_petri_B[i] = calloc(local_x, sizeof(cell));
     }
+
+
     // SINCE THE POINTERS ALWAYS CHANGE, ALL LOCAL PETRI B WILL BE DE-ALLOCATED AS LOCAL PETRI A.
     // DE ALLOCATING THE LAST ONE.
     free_multi_cell_array(local_petri_B, local_x);
 
     // WRITING IMAGE AND FREEING THE IMAGES FROM MEMORY. FREEING THESE IMAGES ALSO FREES
     // ALL "PETRI" MULTI DIMENSIONAL ARRAYS ALLOCATED EARLIER IN THE APP.
+    if (rank==0) {
+        system("clear");
+        printf("Done iterating over cells. Writing images to disk...\n");
+    }
     write_images();
     MPI_Finalize();
-
-    // You should probably make sure to free your memory here
-    // We will dock points for memory leaks, don't let your hard work go to waste!
-    // free_stuff()
-
     exit(0);
 }
 

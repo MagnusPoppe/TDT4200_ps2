@@ -13,16 +13,10 @@ int rank, size;
 
 void send(cell* payload, int direction, MPI_Datatype type, int len)
 {
-//     PRINTING FOR DEBUG:
-//    if (direction == p_north)      printf("RANK %d, BEFORE SENDING TO NORTH:     ", rank);
-//    else if (direction == p_south) printf("RANK %d, BEFORE SENDING TO SOUTH:     ", rank);
-//    else if (direction == p_west)  printf("RANK %d, BEFORE SENDING TO WEST:      ", rank);
-//    else                           printf("RANK %d, BEFORE SENDING TO EAST:      ", rank);
-
-//    print_list(payload, len);
-
     // SENDING AND FREEING MEMORY
     MPI_Send(payload, 1, type, direction, 0, cart_comm);
+
+    // ONLY FREE IF THIS IS A COLUMN. ROWS ARE PART OF THE LOCAL PETRI DISH AND WILL BE FREED THERE.
     if (type == border_col_t) free( payload );
 }
 
@@ -30,14 +24,6 @@ void recieve(int direction, MPI_Datatype type, cell* package, int len)
 {
     // RECIEVING:
     MPI_Recv(package, 1, type, direction, 0, cart_comm, MPI_STATUS_IGNORE);
-
-    // PRINT FOR DEBUG:
-//    if (direction == p_north)      printf("RANK %d, AFTER RECIEVING TO NORTH:    ", rank);
-//    else if (direction == p_south) printf("RANK %d, AFTER RECIEVING TO SOUTH:    ", rank);
-//    else if (direction == p_west)  printf("RANK %d, AFTER RECIEVING TO WEST:     ", rank);
-//    else                           printf("RANK %d, AFTER RECIEVING TO EAST:     ", rank);
-
-//    print_list(package, len);
 }
 
 void send_row(int row, int direction, cell** matrix, int len)
@@ -81,7 +67,10 @@ void exchange_borders(
         // RECIEVE PACKAGE FROM SOUTH ONLY:
         cell *recieve_south = malloc(xSize * sizeof(cell));
         recieve(p_south, border_row_t, recieve_south, xSize);
+
         stitch_bottom_row(recieve_south, ySize, xSize, matrix);
+
+//       todo: free(recieve_south);
     }
     else if ((squared * (squared - 1)) + 1 <= rank + 1 && rank + 1 <= size)
     {
@@ -92,6 +81,7 @@ void exchange_borders(
         cell *recieve_north = malloc(xSize * sizeof(cell));
         recieve(p_north, border_row_t, recieve_north, xSize);
         stitch_top_row(recieve_north, xSize, matrix);
+//      todo:  free(recieve_north);
     }
     else
     {
@@ -107,6 +97,9 @@ void exchange_borders(
         cell *recieve_north = malloc(xSize * sizeof(cell));
         recieve(p_north, border_row_t, recieve_north, xSize);
         stitch_top_row(recieve_north, xSize, matrix);
+
+//       todo: free(recieve_south);
+//       todo: free(recieve_north);
     }
 
     bool not_edge = true;
@@ -123,7 +116,7 @@ void exchange_borders(
 
             // STITCHING PACKAGE TO IMAGE:
             stitch_right_column(package, ySize, xSize, matrix);
-
+            free(package);
             // BREAKING THE LOOP:
             not_edge = false;
             break;
@@ -139,6 +132,7 @@ void exchange_borders(
 
             // STITCHING PACKAGE TO IMAGE:
             stitch_left_column(package, ySize, xSize, matrix);
+            free(package);
 
             // BREAKING THE LOOP:
             not_edge = false;
@@ -159,6 +153,9 @@ void exchange_borders(
 
         stitch_left_column(west_package, ySize, xSize, matrix);
         stitch_right_column(east_package, ySize, xSize, matrix);
+
+        free(west_package);
+        free(east_package);
     }
 }
 
@@ -186,14 +183,9 @@ void stitch_right_column(cell *column, int ylen, int xlen, cell** matrix) {
     }
 }
 
-
-
 void print_matrix(cell **matrix, int Xlen, int Ylen) {
-    for (int y = 0; y < Ylen; y++) {
-        for (int x = 0; x < Xlen; x++)
-            printf("[%d, %d] ", matrix[y][x].strength, matrix[y][x].color);
-        printf("\n");
-    }
+    for (int y = 0; y < Ylen; y++)
+        print_list(matrix[y], Xlen);
     printf("\n");
 }
 

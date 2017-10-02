@@ -42,6 +42,10 @@ clear :
 run : clean parallel clear
 	mpirun -n 4 ./parallelRPS
 
+.PHONY : memcheck
+memcheck : clean parallel clear
+	mpirun -n 4 valgrind --track-origins=yes ./parallelRPS
+
 .PHONY : parallelVideo
 parallelVideo : clean parallel clear
 	mpirun -n 4 ./parallelRPS && ffmpeg -framerate 60 -i data/CA-%000d.bmp -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p output.mp4

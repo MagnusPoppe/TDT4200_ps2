@@ -61,4 +61,5 @@ void make_bmp(cell** image, int index){
   sprintf(filename, "data/CA-%d.bmp", index);
   /* write image to disk */
   savebmp(filename,buffer,IMG_X,IMG_Y);
+  free(buffer);
 }

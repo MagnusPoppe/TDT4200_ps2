@@ -23,7 +23,7 @@
 #define BORDER_SIZE 1
 
 // How many iterations?
-#define ITERATIONS 250
+#define ITERATIONS 10000
 
 #endif
 void create_cartesian_communicator();
