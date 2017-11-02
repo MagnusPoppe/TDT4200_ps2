@@ -1,7 +1,9 @@
-#include <stdlib.h>
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <math.h>
 #include <mpi.h>
-#include <time.h>
 
 #include "RPS_MPI.h"
 
@@ -57,20 +59,20 @@ int main(int argc, char **argv) {
     initialize();
     create_types();
 
-
-    if (rank == 0)
-    {
-        // THIS IS DEALLOCATED INSIDE THE "WRITE IMAGES" LOOP.
-        printf("CALCULATING IMAGES...\n");
-        images = calloc(ITERATIONS, sizeof(cell**));
-    }
+    // UNCOMMENT FOR VIDEO:
+//    if (rank == 0)
+//    {
+//        // THIS IS DEALLOCATED INSIDE THE "WRITE IMAGES" LOOP.
+//        printf("CALCULATING IMAGES...\n");
+//        images = calloc(ITERATIONS, sizeof(cell**));
+//    }
 
     int percentage = ITERATIONS/100;
     int percent = 0;
     for( int i = 0; i < ITERATIONS; i++) {
         if (rank == 1 && i == (percent+1) * percentage) {
             percent ++;
-            system("clear");
+//            system("clear");
             printf("Progress iterating over the petri dish: %d %c \n", percent, '%');
         }
 
@@ -80,10 +82,21 @@ int main(int argc, char **argv) {
         );
 
         iterate_CA(local_petri_A, local_petri_B);
-        gather_petri();
-        if (rank==0)
-        {
-            images[i] = petri;
+
+        // UNCOMMENT FOR MAKING VIDEO
+//        gather_petri();
+//        if (rank==0)
+//        {
+//            images[i] = petri;
+//        }
+
+        // UNCOMMENT FOR SINGLE IMAGE
+        if (i == ITERATIONS-1) {
+            gather_petri();
+            if (rank == 0) {
+                make_bmp(petri, 0);
+                free_multi_cell_array(petri, IMG_X);
+            }
         }
 
         // FREEING THE LAST USED PETRI DISH.
@@ -102,18 +115,25 @@ int main(int argc, char **argv) {
     // WRITING IMAGE AND FREEING THE IMAGES FROM MEMORY. FREEING THESE IMAGES ALSO FREES
     // ALL "PETRI" MULTI DIMENSIONAL ARRAYS ALLOCATED EARLIER IN THE APP.
     if (rank==0) {
-        system("clear");
-        printf("Done iterating over cells. Writing images to disk...\n");
+//        system("clear");
+        printf("Done iterating over cells. Writing %d images to disk...\n", ITERATIONS);
     }
-    write_images();
+
+    // UNCOMMENT FOR VIDEO:
+//     write_images();
+
+    // CLOSING DOWN MPI:
+    MPI_Type_free(&mpi_cell_t);
+    MPI_Type_free(&local_petri_t);
+    MPI_Type_free(&border_row_t);
+    MPI_Type_free(&border_col_t);
     MPI_Finalize();
-    exit(0);
 }
 
 void write_images()
 {
     if (rank == 0) {
-        for (int i = 0; i < ITERATIONS; i++) {
+        for( int i = 0; i < ITERATIONS; i++) {
             make_bmp(images[i], i);
             free_multi_cell_array(images[i], IMG_X);
         }

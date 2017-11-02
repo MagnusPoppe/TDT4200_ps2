@@ -7,8 +7,9 @@
 
 #endif //TDT4200_PS2_BORDER_EXCHANGE_H
 
-#include "RPS_MPI.h"
 #include <mpi.h>
+#include <math.h>
+#include "RPS_MPI.h"
 
 // FUNCTION FOR THE MAIN BORDER EXCHANGE
 void exchange_borders(

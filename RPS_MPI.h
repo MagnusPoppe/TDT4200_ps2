@@ -1,10 +1,6 @@
 #ifndef RPS_MPI_H
 #define RPS_MPI_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <math.h>
 
 #include "CA.h"
 #include "bitmap.h"
@@ -18,9 +14,6 @@
 
 #define IMG_X 512
 #define IMG_Y 512
-
-// Each cell is updated based on neighbors of distance 1
-#define BORDER_SIZE 1
 
 // How many iterations?
 #define ITERATIONS 10000

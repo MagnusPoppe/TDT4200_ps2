@@ -1,0 +1,75 @@
+==69224== Memcheck, a memory error detector
+==69224== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==69224== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==69224== Command: ./parallelRPS
+==69224== Parent PID: 69220
+==69224== 
+--69224-- run: /usr/bin/dsymutil "./parallelRPS"
+==69222== Syscall param msg->desc.port.name points to uninitialised byte(s)
+==69222==    at 0x10063E34A: mach_msg_trap (in /usr/lib/system/libsystem_kernel.dylib)
+==69222==    by 0x10063D796: mach_msg (in /usr/lib/system/libsystem_kernel.dylib)
+==69222==    by 0x100637485: task_set_special_port (in /usr/lib/system/libsystem_kernel.dylib)
+==69222==    by 0x1007D310E: _os_trace_create_debug_control_port (in /usr/lib/system/libsystem_trace.dylib)
+==69222==    by 0x1007D3458: _libtrace_init (in /usr/lib/system/libsystem_trace.dylib)
+==69222==    by 0x1001BB9DF: libSystem_initializer (in /usr/lib/libSystem.B.dylib)
+==69222==    by 0x10001BA1A: ImageLoaderMachO::doModInitFunctions(ImageLoader::LinkContext const&) (in /usr/lib/dyld)
+==69222==    by 0x10001BC1D: ImageLoaderMachO::doInitialization(ImageLoader::LinkContext const&) (in /usr/lib/dyld)
+==69222==    by 0x1000174A9: ImageLoader::recursiveInitialization(ImageLoader::LinkContext const&, unsigned int, char const*, ImageLoader::InitializerTimingList&, ImageLoader::UninitedUpwards&) (in /usr/lib/dyld)
+==69222==    by 0x100017440: ImageLoader::recursiveInitialization(ImageLoader::LinkContext const&, unsigned int, char const*, ImageLoader::InitializerTimingList&, ImageLoader::UninitedUpwards&) (in /usr/lib/dyld)
+==69222==    by 0x100016523: ImageLoader::processInitializers(ImageLoader::LinkContext const&, unsigned int, ImageLoader::InitializerTimingList&, ImageLoader::UninitedUpwards&) (in /usr/lib/dyld)
+==69222==    by 0x1000165B8: ImageLoader::runInitializers(ImageLoader::LinkContext const&, ImageLoader::InitializerTimingList&) (in /usr/lib/dyld)
+==69222==  Address 0x10808d4ec is on thread 1's stack
+==69222==  in frame #2, created by task_set_special_port (???:)
+==69222== 
+--69223-- UNKNOWN task message [id 3445, to mach_task_self(), reply 0x707]
+--69223-- UNKNOWN task message [id 3445, to mach_task_self(), reply 0x707] (repeated 2 times)
+--69223-- UNKNOWN mach_msg unhandled MACH_SEND_TRAILER option
+--69223-- UNKNOWN mach_msg unhandled MACH_SEND_TRAILER option (repeated 2 times)
+--69223-- UNKNOWN mach_msg unhandled MACH_SEND_TRAILER option (repeated 4 times)
+--69223-- UNKNOWN mach_msg unhandled MACH_SEND_TRAILER option (repeated 8 times)
+==69223== Thread 2:
+==69223== Invalid read of size 4
+==69223==    at 0x10079B899: _pthread_body (in /usr/lib/system/libsystem_pthread.dylib)
+==69223==    by 0x10079B886: _pthread_start (in /usr/lib/system/libsystem_pthread.dylib)
+==69223==    by 0x10079B08C: thread_start (in /usr/lib/system/libsystem_pthread.dylib)
+==69223==  Address 0x18 is not stack'd, malloc'd or (recently) free'd
+==69223== 
+==69223== Invalid read of size 8
+==69223==    at 0x1007999D6: pthread_getspecific (in /usr/lib/system/libsystem_pthread.dylib)
+==69223==    by 0x10057A21A: __snprintf_chk (in /usr/lib/system/libsystem_c.dylib)
+==69223==    by 0x1002A4909: show_stackframe (in /usr/local/lib/libopen-pal.40.dylib)
+==69223==    by 0x25805BBB1: ???
+==69223==    by 0x10079B886: _pthread_start (in /usr/lib/system/libsystem_pthread.dylib)
+==69223==    by 0x10079B08C: thread_start (in /usr/lib/system/libsystem_pthread.dylib)
+==69223==  Address 0x50 is not stack'd, malloc'd or (recently) free'd
+==69223== 
+==69223== 
+==69223== Process terminating with default action of signal 11 (SIGSEGV)
+==69223==  Access not within mapped region at address 0x50
+==69223==    at 0x1007999D6: pthread_getspecific (in /usr/lib/system/libsystem_pthread.dylib)
+==69223==    by 0x10057A21A: __snprintf_chk (in /usr/lib/system/libsystem_c.dylib)
+==69223==    by 0x1002A4909: show_stackframe (in /usr/local/lib/libopen-pal.40.dylib)
+==69223==    by 0x25805BBB1: ???
+==69223==    by 0x10079B886: _pthread_start (in /usr/lib/system/libsystem_pthread.dylib)
+==69223==    by 0x10079B08C: thread_start (in /usr/lib/system/libsystem_pthread.dylib)
+==69223==  If you believe this happened as a result of a stack
+==69223==  overflow in your program's main thread (unlikely but
+==69223==  possible), you can try to increase the size of the
+==69223==  main thread stack using the --main-stacksize= flag.
+==69223==  The main thread stack size used in this run was 67104768.
+==69223== 
+==69223== HEAP SUMMARY:
+==69223==     in use at exit: 347,696 bytes in 3,265 blocks
+==69223==   total heap usage: 5,686 allocs, 2,421 frees, 685,851 bytes allocated
+==69223== 
+==69222== LEAK SUMMARY:
+==69222==    definitely lost: 167,705 bytes in 50 blocks
+==69222==    indirectly lost: 136,379 bytes in 2,815 blocks
+==69222==      possibly lost: 1,536 bytes in 15 blocks
+==69222==    still reachable: 24,232 bytes in 235 blocks
+==69222==         suppressed: 17,844 bytes in 150 blocks
+==69222== Rerun with --leak-check=full to see details of leaked memory
+==69222== 
+==69222== For counts of detected and suppressed errors, rerun with: -v
+==69222== Use --track-origins=yes to see where uninitialised values come from
+==69222== ERROR SUMMARY: 3 errors from 3 contexts (suppressed: 1 from 1)

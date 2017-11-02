@@ -1,0 +1,1 @@
+CMakeLists.txt not found in /Users/MagnusPoppe/Google Drive/NTNU/S1 TDT4200 Parallelle Beregninger/Innlevering 2/TDT4200_ps2

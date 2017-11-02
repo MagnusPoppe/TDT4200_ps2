@@ -17,7 +17,7 @@ void send(cell* payload, int direction, MPI_Datatype type, int len)
     MPI_Send(payload, 1, type, direction, 0, cart_comm);
 
     // ONLY FREE IF THIS IS A COLUMN. ROWS ARE PART OF THE LOCAL PETRI DISH AND WILL BE FREED THERE.
-    if (type == border_col_t) free( payload );
+    free( payload );
 }
 
 void recieve(int direction, MPI_Datatype type, cell* package, int len)
@@ -28,7 +28,9 @@ void recieve(int direction, MPI_Datatype type, cell* package, int len)
 
 void send_row(int row, int direction, cell** matrix, int len)
 {
-    cell* payload = matrix[row];
+    cell* payload = malloc(sizeof(cell)*len);
+    for (int x = 0; x < len; x++)
+        payload[x] = matrix[row][x];
     send(payload, direction, border_row_t, len);
 }
 
@@ -70,7 +72,7 @@ void exchange_borders(
 
         stitch_bottom_row(recieve_south, ySize, xSize, matrix);
 
-//       todo: free(recieve_south);
+        free(recieve_south);
     }
     else if ((squared * (squared - 1)) + 1 <= rank + 1 && rank + 1 <= size)
     {
@@ -81,7 +83,7 @@ void exchange_borders(
         cell *recieve_north = malloc(xSize * sizeof(cell));
         recieve(p_north, border_row_t, recieve_north, xSize);
         stitch_top_row(recieve_north, xSize, matrix);
-//      todo:  free(recieve_north);
+        free(recieve_north);
     }
     else
     {
@@ -98,8 +100,8 @@ void exchange_borders(
         recieve(p_north, border_row_t, recieve_north, xSize);
         stitch_top_row(recieve_north, xSize, matrix);
 
-//       todo: free(recieve_south);
-//       todo: free(recieve_north);
+        free(recieve_south);
+        free(recieve_north);
     }
 
     bool not_edge = true;
@@ -161,13 +163,13 @@ void exchange_borders(
 
 void stitch_bottom_row(cell *row, int ylen, int xlen, cell** matrix) {
     for (int i = 0; i < xlen; i++) {
-        matrix[ylen - 1] = row;
+        matrix[ylen - 1][i] = row[i];
     }
 }
 
 void stitch_top_row(cell *row, int len, cell** matrix) {
     for (int i = 0; i < len; i++) {
-        matrix[0] = row;
+        matrix[0][i] = row[i];
     }
 }
 
